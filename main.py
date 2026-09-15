@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ربات مانیتورینگ آگهی‌های مالک شخصی دیوار - مشهد
-نسخه مخصوص GitHub Actions
+نسخه مخصوص GitHub Actions (پشتیبانی از چند مشترک)
 """
 
 import os
@@ -19,13 +19,16 @@ import config
 load_dotenv()
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-ADMIN_CHAT_ID = os.getenv("ADMIN_CHAT_ID")
+CHAT_IDS_RAW = os.getenv("CHAT_IDS", "")
 
 if not BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN تنظیم نشده است!")
 
-if not ADMIN_CHAT_ID:
-    raise ValueError("ADMIN_CHAT_ID تنظیم نشده است!")
+# تبدیل رشته آیدی‌ها به لیست
+CHAT_IDS = [cid.strip() for cid in CHAT_IDS_RAW.split(",") if cid.strip()]
+
+if not CHAT_IDS:
+    raise ValueError("هیچ CHAT_IDS تنظیم نشده است!")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -205,11 +208,12 @@ async def send_message(bot: Bot, chat_id: str, message: str):
         )
         print(f"  ✅ پیام ارسال شد به {chat_id}")
     except Exception as e:
-        print(f"  [ERROR] ارسال ناموفق: {e}")
+        print(f"  [ERROR] ارسال به {chat_id} ناموفق: {e}")
 
 
 async def run_scraper():
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] شروع اسکرپ دیوار...")
+    print(f"  تعداد مشترکین: {len(CHAT_IDS)}")
 
     init_db()
     bot = Bot(token=BOT_TOKEN)
@@ -253,8 +257,9 @@ async def run_scraper():
     print(f"  تعداد آگهی جدید برای ارسال: {len(new_posts)}")
 
     for post in new_posts:
-        await send_message(bot, ADMIN_CHAT_ID, post["message"])
-        await asyncio.sleep(1)
+        for chat_id in CHAT_IDS:
+            await send_message(bot, chat_id, post["message"])
+            await asyncio.sleep(0.5)
 
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] اسکرپ تمام شد.\n")
 
