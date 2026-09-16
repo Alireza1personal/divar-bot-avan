@@ -25,5 +25,5 @@ jobs:
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          ADMIN_CHAT_ID: ${{ secrets.ADMIN_CHAT_ID }}
+          CHAT_IDS: ${{ secrets.CHAT_IDS }}
         run: python main.py
