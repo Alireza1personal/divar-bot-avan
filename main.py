@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ربات مانیتورینگ آگهی‌های مالک شخصی دیوار - مشهد
-نسخه مخصوص GitHub Actions (پشتیبانی از چند مشترک)
+نسخه مخصوص GitHub Actions (پایدار)
 """
 
 import os
@@ -24,7 +24,6 @@ CHAT_IDS_RAW = os.getenv("CHAT_IDS", "")
 if not BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN تنظیم نشده است!")
 
-# تبدیل رشته آیدی‌ها به لیست
 CHAT_IDS = [cid.strip() for cid in CHAT_IDS_RAW.split(",") if cid.strip()]
 
 if not CHAT_IDS:
@@ -220,7 +219,7 @@ async def run_scraper():
 
     all_candidates = []
 
-            for cat in config.CATEGORIES:
+    for cat in config.CATEGORIES:
         print(f"  → جستجو در دسته: {cat['label']}")
         data = search_divar(cat["category"])
         filtered = filter_districts(data, cat["category"], cat["label"])
