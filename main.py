@@ -220,14 +220,11 @@ async def run_scraper():
 
     all_candidates = []
 
-        for cat in config.CATEGORIES:
+            for cat in config.CATEGORIES:
         print(f"  → جستجو در دسته: {cat['label']}")
-        for page in [1, 2, 3]:
-            print(f"     صفحه {page}...")
-            data = search_divar(cat["category"], page=page)
-            filtered = filter_districts(data, cat["category"], cat["label"])
-            all_candidates.extend(filtered)
-            await asyncio.sleep(3)   # فاصله بین صفحات
+        data = search_divar(cat["category"])
+        filtered = filter_districts(data, cat["category"], cat["label"])
+        all_candidates.extend(filtered)
         await asyncio.sleep(2)
 
     unique = {c["token"]: c for c in all_candidates}
