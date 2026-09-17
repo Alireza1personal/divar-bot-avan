@@ -74,10 +74,14 @@ def mark_seen(token: str, title: str, district: str, category: str):
     conn.close()
 
 
-def search_divar(category: str) -> dict:
+def search_divar(category: str, page: int = 1) -> dict:
     url = "https://api.divar.ir/v8/postlist/w/search"
     payload = {
         "city_ids": [config.CITY_ID],
+        "pagination_data": {
+            "@type": "type.googleapis.com/post_list.PaginationData",
+            "page": page
+        },
         "search_data": {
             "form_data": {
                 "data": {
@@ -91,7 +95,7 @@ def search_divar(category: str) -> dict:
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        print(f"[ERROR] Search failed for {category}: {e}")
+        print(f"[ERROR] Search failed for {category} page {page}: {e}")
         return {}
 
 
