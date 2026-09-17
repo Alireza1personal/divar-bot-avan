@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ربات مانیتورینگ آگهی‌های مالک شخصی دیوار - مشهد
-نسخه مخصوص GitHub Actions (پایدار)
+نسخه GitHub Actions + صفحات ۱ تا ۳
 """
 
 import os
@@ -73,8 +73,10 @@ def mark_seen(token: str, title: str, district: str, category: str):
     conn.close()
 
 
-def search_divar(category: str) -> dict:
+def search_divar(category: str, page: int = 1, last_post_date: int = None) -> dict:
+    """جستجو با پشتیبانی از صفحه‌بندی"""
     url = "https://api.divar.ir/v8/postlist/w/search"
+
     payload = {
         "city_ids": [config.CITY_ID],
         "search_data": {
@@ -85,12 +87,22 @@ def search_divar(category: str) -> dict:
             }
         }
     }
+
+    # برای صفحات بعد از ۱
+    if page > 1 and last_post_date is not None:
+        payload["pagination_data"] = {
+            "@type": "type.googleapis.com/post_list.PaginationData",
+            "last_post_date": last_post_date,
+            "page": page,
+            "layer_page": page
+        }
+
     try:
-        resp = requests.post(url, headers=HEADERS, json=payload, timeout=20)
+        resp = requests.post(url, headers=HEADERS, json=payload, timeout=25)
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        print(f"[ERROR] Search failed for {category}: {e}")
+        print(f"[ERROR] Search failed for {category} page {page}: {e}")
         return {}
 
 
@@ -121,9 +133,7 @@ def filter_districts(data: dict, category: str, cat_label: str) -> list:
             })
 
     unique = {r["token"]: r for r in results}
-    unique_list = list(unique.values())
-    random.shuffle(unique_list)
-    return unique_list[:config.MAX_PER_RUN]
+    return list(unique.values())
 
 
 def fetch_post_details(token: str) -> dict:
@@ -221,17 +231,34 @@ async def run_scraper():
 
     for cat in config.CATEGORIES:
         print(f"  → جستجو در دسته: {cat['label']}")
-        data = search_divar(cat["category"])
-        filtered = filter_districts(data, cat["category"], cat["label"])
-        all_candidates.extend(filtered)
+        last_post_date = None
+
+        for page in [1, 2, 3]:
+            print(f"     صفحه {page}...")
+            data = search_divar(cat["category"], page=page, last_post_date=last_post_date)
+
+            if not data:
+                print(f"     صفحه {page} خالی یا خطا داشت، رد می‌شویم.")
+                break
+
+            # استخراج last_post_date برای صفحه بعدی
+            last_post_date = data.get("last_post_date") or data.get("pagination", {}).get("last_post_date")
+
+            filtered = filter_districts(data, cat["category"], cat["label"])
+            print(f"     → {len(filtered)} آگهی بعد از فیلتر محله در این صفحه")
+            all_candidates.extend(filtered)
+
+            await asyncio.sleep(3)  # فاصله انسانی بین صفحات
+
         await asyncio.sleep(2)
 
+    # حذف تکراری بین دسته‌ها و صفحات
     unique = {c["token"]: c for c in all_candidates}
     candidates = list(unique.values())
     random.shuffle(candidates)
     candidates = candidates[:config.MAX_PER_RUN]
 
-    print(f"  تعداد کاندید بعد از فیلتر محله: {len(candidates)}")
+    print(f"  تعداد کل کاندید بعد از فیلتر محله: {len(candidates)}")
 
     new_posts = []
     for cand in candidates:
