@@ -20,6 +20,6 @@ AGENCY_KEYWORDS = [
     "بی واسطه", "بی‌واسطه", "مسکن", "دفتر"
 ]
 
-MAX_PER_RUN = 12
+MAX_PER_RUN = 50
 DELAY_BETWEEN_POSTS = 8
 CITY_ID = "3"
