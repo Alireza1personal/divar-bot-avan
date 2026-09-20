@@ -2,8 +2,11 @@ name: Divar Scraper
 
 on:
   schedule:
-            - cron: '*/30 * * * *'
+    - cron: '*/30 * * * *'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   scrape:
@@ -27,3 +30,11 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           CHAT_IDS: ${{ secrets.CHAT_IDS }}
         run: python main.py
+
+      - name: Save state (last_run + seen tokens)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add data/ || true
+          git diff --staged --quiet || git commit -m "chore: update scrape state"
+          git push || true
