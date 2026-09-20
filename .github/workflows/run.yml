@@ -2,7 +2,7 @@ name: Divar Scraper
 
 on:
   schedule:
-        - cron: '7,37 * * * *'
+    - cron: '7,37 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -11,6 +11,7 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +29,9 @@ jobs:
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          CHAT_IDS: ${{ secrets.CHAT_IDS }}
+          GROUP_CHAT_ID: ${{ secrets.GROUP_CHAT_ID }}
+          SALES_THREAD_ID: ${{ secrets.SALES_THREAD_ID }}
+          RENT_THREAD_ID: ${{ secrets.RENT_THREAD_ID }}
         run: python main.py
 
       - name: Save state (last_run + seen tokens)
