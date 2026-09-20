@@ -110,19 +110,44 @@ def search_divar(category: str, page: int = 1, last_post_date=None) -> dict:
         return {}
 
 
+LIST_AGENCY_KEYWORDS = [
+    "مشاور", "هلدینگ", "آژانس", "املاک", "مسکن",
+    "آقای ملک", "مشاور ملکی", "مشاور مسکن", "کارگزاری",
+    "مشاوره", "گروه املاک", "آژانس مسکن",
+]
+
+
 def extract_candidates(data: dict, category: str, cat_label: str) -> list:
     results = []
     widgets = data.get("list_widgets", [])
+
     for w in widgets:
         if w.get("widget_type") != "POST_ROW":
             continue
-        payload = ((w.get("data") or {}).get("action") or {}).get("payload") or {}
+
+        d = w.get("data") or {}
+        payload = ((d.get("action") or {}).get("payload") or {})
         token = payload.get("token")
         if not token:
             continue
+
         web_info = payload.get("web_info") or {}
         district = web_info.get("district_persian") or ""
-        title = web_info.get("title") or (w.get("data") or {}).get("title") or ""
+        title = web_info.get("title") or d.get("title") or ""
+
+        # متن‌های روی کارت لیست (زیر قیمت و اطراف آن)
+        list_text = " ".join([
+            str(title or ""),
+            str(d.get("top_description_text") or ""),
+            str(d.get("middle_description_text") or ""),
+            str(d.get("bottom_description_text") or ""),
+            str(web_info.get("title") or ""),
+        ]).replace("‌", " ")
+
+        # اگر روی کارت کلمه مشاور/املاک بود، رد کن (بدون درخواست جزئیات)
+        if any(k in list_text for k in LIST_AGENCY_KEYWORDS):
+            continue
+
         if any(t in district for t in config.TARGET_DISTRICTS):
             results.append({
                 "token": token,
@@ -131,6 +156,7 @@ def extract_candidates(data: dict, category: str, cat_label: str) -> list:
                 "category": category,
                 "catLabel": cat_label
             })
+
     return results
 
 
