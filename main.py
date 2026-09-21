@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 ربات مانیتورینگ آگهی‌های مالک شخصی دیوار - مشهد
-نسخه گروه تلگرام + تاپیک (فروش / رهن‌اجاره)
+گروه + تاپیک | فیلتر لیست | توقف روی تکراری | صفحات بیشتر
 """
 
 import os
@@ -35,7 +35,6 @@ try:
 except ValueError:
     raise ValueError("TOPIC_SELL و TOPIC_RENT باید عدد باشند!")
 
-# دسته‌های فروش و اجاره
 SELL_CATEGORIES = {"apartment-sell", "house-villa-sell"}
 RENT_CATEGORIES = {"apartment-rent", "house-villa-rent"}
 
@@ -51,13 +50,15 @@ HEADERS = {
 DATA_DIR = Path("data")
 LAST_RUN_FILE = DATA_DIR / "last_run.txt"
 SEEN_FILE = DATA_DIR / "seen_tokens.txt"
-MAX_PAGES = 8
+MAX_PAGES = 12
 MAX_SEEN_KEEP = 8000
 
-LIST_AGENCY_KEYWORDS = [
+LIST_SKIP_KEYWORDS = [
     "مشاور", "هلدینگ", "آژانس", "املاک", "مسکن",
     "آقای ملک", "مشاور ملکی", "مشاور مسکن", "کارگزاری",
     "مشاوره", "گروه املاک", "آژانس مسکن",
+    "همخونه", "هم خانه", "هم‌خانه", "هم اتاقی", "هم‌اتاقی",
+    "خوابگاه",
 ]
 
 
@@ -99,7 +100,6 @@ def save_seen(seen: set):
 
 
 def get_topic_id(category: str) -> int:
-    """بر اساس دسته، تاپیک مناسب را برمی‌گرداند"""
     if category in SELL_CATEGORIES:
         return TOPIC_SELL_ID
     return TOPIC_RENT_ID
@@ -159,7 +159,7 @@ def extract_candidates(data: dict, category: str, cat_label: str) -> list:
             str(web_info.get("title") or ""),
         ]).replace("‌", " ")
 
-        if any(k in list_text for k in LIST_AGENCY_KEYWORDS):
+        if any(k in list_text for k in LIST_SKIP_KEYWORDS):
             continue
 
         if any(t in district for t in config.TARGET_DISTRICTS):
@@ -215,6 +215,8 @@ def is_owner_and_format(details: dict, cand: dict):
 
     haystack = (title + " " + desc).replace("‌", " ")
     if any(k in haystack for k in config.AGENCY_KEYWORDS):
+        return None
+    if any(k in haystack for k in LIST_SKIP_KEYWORDS):
         return None
 
     lines = [
@@ -274,8 +276,13 @@ async def run_scraper():
     for cat in config.CATEGORIES:
         print(f"  → جستجو در دسته: {cat['label']}")
         last_post_date = None
+        consecutive_seen = 0
+        stop_category = False
 
         for page in range(1, MAX_PAGES + 1):
+            if stop_category:
+                break
+
             print(f"     صفحه {page}...")
             data = search_divar(cat["category"], page=page, last_post_date=last_post_date)
             if not data:
@@ -285,7 +292,20 @@ async def run_scraper():
             last_post_date = data.get("last_post_date") or (data.get("pagination") or {}).get("last_post_date")
             filtered = extract_candidates(data, cat["category"], cat["label"])
             print(f"     → {len(filtered)} آگهی بعد از فیلتر محله/لیست")
-            all_candidates.extend(filtered)
+
+            for cand in filtered:
+                if cand["token"] in seen:
+                    consecutive_seen += 1
+                    if consecutive_seen >= 2:
+                        print("     به دومین آگهی تکراری رسیدیم؛ توقف این دسته.")
+                        stop_category = True
+                        break
+                else:
+                    consecutive_seen = 0
+                    all_candidates.append(cand)
+
+            if stop_category:
+                break
 
             widgets = data.get("list_widgets") or []
             post_rows = [w for w in widgets if w.get("widget_type") == "POST_ROW"]
