@@ -50,7 +50,7 @@ HEADERS = {
 DATA_DIR = Path("data")
 LAST_RUN_FILE = DATA_DIR / "last_run.txt"
 SEEN_FILE = DATA_DIR / "seen_tokens.txt"
-MAX_PAGES = 12
+MAX_PAGES = 15
 MAX_SEEN_KEEP = 8000
 
 LIST_SKIP_KEYWORDS = [
@@ -59,8 +59,9 @@ LIST_SKIP_KEYWORDS = [
     "مشاوره", "گروه املاک", "آژانس مسکن",
     "همخونه", "هم خانه", "هم‌خانه", "هم اتاقی", "هم‌اتاقی",
     "خوابگاه",
+    "همکاری نداریم", "همکاری نمیکنیم", "همکاری نمی‌کنیم",
+    "فایل همکار", "همکار املاک", "فقط همکار", "همکاران",
 ]
-
 
 def ensure_data_dir():
     DATA_DIR.mkdir(exist_ok=True)
