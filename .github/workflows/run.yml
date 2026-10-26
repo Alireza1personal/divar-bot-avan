@@ -31,6 +31,8 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
           TOPIC_SELL: ${{ secrets.TOPIC_SELL }}
           TOPIC_RENT: ${{ secrets.TOPIC_RENT }}
+          NEWAY_API_URL: ${{ secrets.NEWAY_API_URL }}
+          NEWAY_BOT_TOKEN: ${{ secrets.NEWAY_BOT_TOKEN }}
         run: python main.py
 
       - name: Save state
