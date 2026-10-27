@@ -307,6 +307,14 @@ def map_deal_type(category: str) -> str:
 
 def map_property_type(category: str, rows: dict, title: str, desc: str):
     blob = fold_fa(f"{category} {title} {desc} {' '.join(rows.values())}")
+
+    # اول: دسته دیوار
+    if "office" in category:
+        return "اداری"
+    if "shop" in category:
+        return "تجاری"
+
+    # بعد: متن و بقیه دسته‌ها
     if "apartment" in category or "آپارتمان" in blob or "اپارتمان" in blob:
         return "آپارتمان"
     if "تجاری" in blob or "مغازه" in blob:
@@ -320,7 +328,6 @@ def map_property_type(category: str, rows: dict, title: str, desc: str):
     if "house-villa" in category or "خانه" in blob or "کلنگی" in blob or "ویلایی" in blob:
         return "ویلایی"
     return None
-
 
 def map_direction(rows: dict, desc: str, title: str):
     blob = fold_fa(
