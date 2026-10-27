@@ -47,8 +47,8 @@ NEWAY_API_URL = (os.getenv("NEWAY_API_URL") or "").rstrip("/")
 NEWAY_BOT_TOKEN = (os.getenv("NEWAY_BOT_TOKEN") or "").strip()
 PANEL_ENABLED = bool(NEWAY_API_URL and NEWAY_BOT_TOKEN)
 
-SELL_CATEGORIES = {"apartment-sell", "house-villa-sell"}
-RENT_CATEGORIES = {"apartment-rent", "house-villa-rent"}
+SELL_CATEGORIES = {"apartment-sell", "house-villa-sell", "office-sell", "shop-sell"}
+RENT_CATEGORIES = {"apartment-rent", "house-villa-rent", "office-rent", "shop-rent"}
 
 HEADERS = {
     "User-Agent": (
