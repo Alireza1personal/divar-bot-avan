@@ -1,8 +1,9 @@
 name: Divar Scraper
 
 on:
-  schedule:
-    - cron: '7,37 * * * *'
+  # schedule disabled: triggered externally via REST API (workflow_dispatch)
+  # schedule:
+  #   - cron: '7,37 * * * *'
   workflow_dispatch:
 
 permissions:
